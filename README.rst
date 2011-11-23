@@ -1,6 +1,6 @@
-##################
+==================
 facebook-tab-pages
-##################
+==================
 
 A system that allows to assign a certain app/tab to a view. Created as our/my 
 own extendable variant of the statichtml site. It was important to be able to 
