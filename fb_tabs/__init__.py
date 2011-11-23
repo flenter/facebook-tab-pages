@@ -20,9 +20,7 @@ tab_types = TabTypeAdmin()
 
 def autodiscover():
      """$
-     Auto-discover INSTALLED_APPS admin.py modules and fail silently when$
-     not present. This forces an import on them to register any admin bits they$
-     may want.
+     Auto-discover code copied/modified django.admin
      """
 
      import copy
@@ -36,7 +34,6 @@ def autodiscover():
          try:
              before_import_registry = copy.copy(tab_types._registry)
              import_module('%s.views' % app)
-             print "app",app
          except:
              # Reset the model registry to the state before the last import as$
              # this import will have to reoccur on the next request and this$
