@@ -8,8 +8,7 @@ create forms and stuff like that.
 
 The application contains two apps:
 * fb_tabs (the core)
-* tb_static (an example app that allows static pages to be displayed, and displays different content if
-  a user has liked the person/group/company etc on facebook)
+* tb_static (an example app that allows static pages to be displayed, and displays different content if a user has liked the person/group/company etc on facebook)
 
 ============
 installation
@@ -31,7 +30,7 @@ Extending the views
 ===================
 Right now only class based views are supported and will have to be registered like this::
 
-from fb_tabs import tab_types
-tab_types.register(InsertYouViewHere)
+    from fb_tabs import tab_types
+    tab_types.register(InsertYouViewHere)
 
 
