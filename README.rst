@@ -21,7 +21,9 @@ You will need to add ``fb_tabs`` and/or ``fb_static``. to your ``INSTALLED_APPS`
         'fb_static',
     }
 
-Finally, run ``python manage.py syncdb`` in your application's directory to create the tables.
+Run ``python manage.py syncdb`` in your application's directory to create the tables.
+
+Finally don't forget to include fb_tabs.urls in your urls.py. 
 
 
 ===================
@@ -29,7 +31,13 @@ Extending the views
 ===================
 Right now only class based views are supported and will have to be registered like this::
 
+    from django.views.generic import Templateview
+
+    class MyCustomView(TemplateView):
+        template_name = 'some/template.html'
+
+
     from fb_tabs import tab_types
-    tab_types.register(InsertYouViewHere)
+    tab_types.register(MyCustomView)
 
 
