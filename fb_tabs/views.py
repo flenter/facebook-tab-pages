@@ -14,6 +14,8 @@ import hmac
 import simplejson as json
 
 class TabbedPageMixin(object):
+    """ Mixin implementing the get_correct_view method. This checks for publish state yes/no and such.
+    It returns the related view as set in the database (or none if the view is not valid anymore"""
 
     def get_correct_view(self, *args, **kwargs):
         tab = get_object_or_404(AppTab, app_info__slug = kwargs['app_slug'], slug = kwargs['tab_slug'])
@@ -33,7 +35,10 @@ class TabbedPageMixin(object):
 
 
 class TabLandingView(TemplateView, TabbedPageMixin):
-
+    """Initial view that handles retrieving the signed_request data and after that redirects to the TabView view
+    There's already a start of some implemtation to test the applicaiton outside of facebook. But that has not 
+    been fully implemented yet.
+    """
     def dispatch(self, request, *args, **kwargs):
 
         self.get_correct_view(request, *args, **kwargs)
@@ -109,6 +114,8 @@ class TabLandingView(TemplateView, TabbedPageMixin):
 
 
 class TabView(TemplateView, TabbedPageMixin):
+
+    """ The core view of the app, it calls the associated view with some additional parameters"""
 
     template_name = 'fb_tabs/index.html'
 

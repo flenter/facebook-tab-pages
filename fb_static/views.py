@@ -19,15 +19,12 @@ class StaticView(TemplateView):
 
         context['content'] = content
 
-        print context['local_data']
-        print self.kwargs
-
         return context
 
     def post(self, request, *args, **kwargs):
         return self.get(request, *args, **kwargs)
 
-print "...."
+
 from fb_tabs import tab_types
 tab_types.register(StaticView)
 
