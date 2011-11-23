@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 
 # Create your models here.
 
-from core.models import PublishItem
+from scm_core.models import PublishItem
 
 class ApplicationInfo(PublishItem):
     title = models.CharField(max_length = 100)
