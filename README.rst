@@ -7,8 +7,8 @@ own extendable variant of the statichtml site. It was important to be able to
 create forms and stuff like that.
 
 The application contains two apps:
-* fb_tabs (the core)
-* tb_static (an example app that allows static pages to be displayed, and displays different content if a user has liked the person/group/company etc on facebook)
+fb_tabs (the core)
+tb_static (an example app that allows static pages to be displayed, and displays different content if a user has liked the person/group/company etc on facebook)
 
 ============
 installation
@@ -16,11 +16,10 @@ installation
 
 You will need to add ``fb_tabs`` and/or ``fb_static``. to your ``INSTALLED_APPS``::
 
-INSTALLED_APPS = {
-    ....
-    'fb_tabs',
-    'fb_static',
-}
+    INSTALLED_APPS = {
+        'fb_tabs',
+        'fb_static',
+    }
 
 Finally, run ``python manage.py syncdb`` in your application's directory to create the tables.
 
