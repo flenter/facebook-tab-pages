@@ -1,3 +1,5 @@
+__version__ = 0.1
+
 class TabTypeAdmin:
     def __init__(self):
         self._registry = {}
