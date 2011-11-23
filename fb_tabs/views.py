@@ -128,6 +128,9 @@ class TabView(TemplateView, TabbedPageMixin):
 
         data = cache.get(user_uid)
 
+        if not(data):
+            raise Http404
+
         import marshal
 
         loaded_data = marshal.loads(data)
