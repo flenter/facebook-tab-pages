@@ -33,17 +33,21 @@ Finally don't forget to include fb_tabs.urls in your urls.py. For instance::
 ============
 How it works
 ============
-Make an application on facebook at http://facebook.com/developers/ and fill in the preferred urls like so ``yourdomain.com/tabs/application-slug/page-slug/``. Note: the word tabs comes from the urls.py setting earlier.
-create a tab on facebook (see facebook documentation on how to do that).
 
-The next steps might sound a bit confusing, but are not that difficult, keeping in mind there are only 3 models:
-* Tab Type. This holds a readable description of each view you want to expose. So if fb_static is installed it holds:fb_static.views.StaticView
+First of all, what of information does this app store? Well, there are only 3 models:
+* Tab Type. This holds a readable description of each django view you want to expose. So if fb_static is installed it holds:fb_static.views.StaticView
 * Application Info. Most importantly, this holds the app_id and secret and has a slug to make it more easily accessible
 * App Tab. This is the page/tab that is linked to both an application info item and a tab type. It also has a slug to make it once again easier to remember.
 
-So, this means that if you do this with no tab types in your database, just go to Tab types and create a tab types for each registered view.
+How to create a nice tab? Here's how (assuming you've already created tab types):
+1. Create an Application Info item in the admin. You don't need to fill in the app_id or app_secret. Just keep them at 0, later the python code will display some forms if the values are 0. Remember the slug for the application.
+2. Create an AppTab. You don't need to fill in the page id yet. Later in the process you wll be asked for this. Remember the slug for this model too
+3. Remember your tab's url. It is constructed like this: ``domain.com/tabs/{{application_slug}}/{{tab_slug}}/``
+4. Make an application on facebook at http://facebook.com/developers/ and fill in the preferred urls (see step 3 for the url on your django website)
+5. With a browser that is logged in as a staff member on your django site, go to facebook and load the tab. Fill in the form asking for the apps id and secret (after saving you get an empty page)
+6. Reload the page. If the page_id is still 0 you now will get a form asking for the page_id (after saving you get an empty page). 
+7. Reload the page... you are done!
 
-After that: create an Application Info, fill in the slug/title/app id and secret and lastely: create a tab and fill in the page id. There's no nice interface yet to retreive the page id yet. It's on the todo list. So right now, add some print statements in your code or use the debug toolbar.
 
 ===================
 Extending the views
