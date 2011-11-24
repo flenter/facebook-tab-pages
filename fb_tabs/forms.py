@@ -14,12 +14,9 @@ class ApplicationInfoForm(forms.ModelForm):
 
 class AppTabForm(forms.ModelForm):
 
+    user_uid = forms.CharField(max_length = 100, widget=forms.widgets.HiddenInput)
+
     class Meta:
         model = AppTab
         fields = ('page_id',)
-
-    def clean(self):
-        values = super(AppTabForm, self).clean()
-
-        return values
 

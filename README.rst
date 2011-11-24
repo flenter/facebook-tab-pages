@@ -45,8 +45,7 @@ How to create a nice tab? Here's how (assuming you've already created tab types)
 3. Remember your tab's url. It is constructed like this: ``domain.com/tabs/{{application_slug}}/{{tab_slug}}/``
 4. Make an application on facebook at http://facebook.com/developers/ and fill in the preferred urls (see step 3 for the url on your django website)
 5. With a browser that is logged in as a staff member on your django site, go to facebook and load the tab. Fill in the form asking for the apps id and secret (after saving you get an empty page)
-6. Reload the page. If the page_id is still 0 you now will get a form asking for the page_id (after saving you get an empty page). 
-7. Reload the page... you are done!
+6. Reload the page. the page_id will be taken from the facebook signed_request. After saving you should see the right view!
 
 
 ===================

@@ -26,21 +26,17 @@ class TabbedPageMixin(object):
                 }
 
         tab = get_object_or_404(AppTab, **query_kwargs)
-
         self.tab = tab
 
         if not tab.is_published() or not tab.app_info.is_published():
+            print "not published"
             raise Http404
-
-        self.tab = tab
 
         new_view = tab.tab_type.related_view
 
         from fb_tabs import tab_types
 
-        real_view = tab_types.get_view(new_view)
-
-        return real_view
+        return tab_types.get_view(new_view)
 
 
 class TabLandingView(TemplateView, TabbedPageMixin):
@@ -54,12 +50,11 @@ class TabLandingView(TemplateView, TabbedPageMixin):
         try:
             self.get_correct_view(request, *args, **kwargs)
         except Http404, e:
-
+            print request.user.is_staff
             if not request.user.is_staff:
                 raise
 
         return super(TabLandingView, self).dispatch(request, *args, **kwargs)
-
 
     def get(self, request, *args, **kwargs):
 
@@ -71,55 +66,67 @@ class TabLandingView(TemplateView, TabbedPageMixin):
 
     def post(self, request, *args, **kwargs):
 
+        from uuid import uuid4
+        from django.core.cache import cache
+        import marshal
+
         signed_request = request.POST.get('signed_request', None)
+
+        secret = self.tab.app_info.app_secret
+
+        data = None
+        if signed_request:
+            data = self.parse_signed_request(smart_str(signed_request), smart_str(secret))
+
+        if data:
+            data_to_store = {
+                    'page_id': int(data['page']['id']),
+                    'liked': bool(data['page']['liked']),
+                    'locale': smart_str(data['user']['locale']),
+                    'country': smart_str(data['user']['country']),
+                    }
+
+            uid = uuid4()
+
+            cache.set(uid.get_hex(), marshal.dumps(data_to_store))
+
+            new_kwargs = kwargs.copy()
+            new_kwargs['user_uid'] = uid.get_hex()
 
         if request.user.is_staff:
             if signed_request:
                 request.method = "GET"
+
+
+            print "self.tab.page_id", self.tab.page_id
+
             if (self.tab.app_info.app_id == '0' or self.tab.app_info.app_secret == '0'):
+
                 new_kwargs = {'slug': kwargs['app_slug']}
                 return EditAppView.as_view()(request, **new_kwargs)
 
-            if (self.tab.page_id == '0'):
+            elif (self.tab.page_id == '0'):
+
                 new_kwargs = {'slug': kwargs['tab_slug']}
-                return EditTabView.as_view()(request, **new_kwargs)
+
+                if data:
+                    instance = EditTabView.as_view(page_id=data_to_store['page_id'], user_uid=uid.get_hex())
+                else:
+                    instance = EditTabView.as_view()
+                return instance(request, **new_kwargs)
 
         if not signed_request:
             # raise a 404 when there's a post to this page without a nice signed_request parameter
             raise Http404
 
-        secret = self.tab.app_info.app_secret
+        if unicode(data_to_store['page_id']) != self.tab.page_id:
+            raise Http404
 
-        data = self.parse_signed_request(smart_str(signed_request), smart_str(secret))
 
         if data == None:
             raise Http404
 
-        data_to_store = {
-                'page_id': int(data['page']['id']),
-                'liked': bool(data['page']['liked']),
-                'locale': smart_str(data['user']['locale']),
-                'country': smart_str(data['user']['country']),
-                }
-
-        if unicode(data_to_store['page_id']) != self.tab.page_id:
-            raise Http404
-
-        from uuid import uuid4
-
-        from django.core.cache import cache
-        import marshal
-
-        uid = uuid4()
-
-        cache.set(uid.get_hex(), marshal.dumps(data_to_store))
-
-        new_kwargs = kwargs.copy()
-        new_kwargs['user_uid'] = uid.get_hex()
-
         return HttpResponseRedirect(reverse('fb_tabs.TabView', args=args, kwargs=new_kwargs))
-
-        return HttpResponseBadRequest()
 
     def base64_url_decode(self, inp):
         padding_factor = (4 - len(inp) % 4) % 4
@@ -156,13 +163,12 @@ class TabView(TemplateView, TabbedPageMixin):
     def get_stored_data(self, user_uid):
 
         from django.core.cache import cache
+        import marshal
 
         data = cache.get(user_uid)
 
         if not(data):
             raise Http404
-
-        import marshal
 
         loaded_data = marshal.loads(data)
 
@@ -193,10 +199,12 @@ class TabView(TemplateView, TabbedPageMixin):
                 instance = real_view.as_view()
                 kwargs['local_data'] = self.loaded_data
                 kwargs['tab'] = self.tab
+                print dir(instance)
 
                 return instance(request, *args, **kwargs)
 
         return super(TabView, self).dispatch(request, *args, **kwargs)
+
 
 class EditAppView(UpdateView):
     model = ApplicationInfo
@@ -206,13 +214,27 @@ class EditAppView(UpdateView):
     def get_success_url(self):
         return self.request.get_full_path()
 
+
 class EditTabView(UpdateView):
     model = AppTab
-
     form_class = AppTabForm
+    page_id = ''
+    user_uid = ''
+
+    def get_initial(self):
+        return {'user_uid': self.user_uid}
+
+    def get_form_kwargs(self, *args, **kwargs):
+        data = super(EditTabView, self).get_form_kwargs(*args, **kwargs)
+        data['instance'].page_id = self.page_id
+
+        return data
 
     def get_success_url(self):
-        return self.request.get_full_path()
+        form = self.get_form(self.get_form_class())
+        form.is_valid()
+        return '%s%s/' % (self.request.get_full_path(), form.cleaned_data['user_uid'])
+
 
 from fb_tabs import autodiscover
 autodiscover()
