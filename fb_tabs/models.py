@@ -10,8 +10,8 @@ from scm_core.models import PublishItem
 class ApplicationInfo(PublishItem):
     title = models.CharField(max_length = 100)
     slug = models.SlugField()
-    app_id = models.CharField(max_length = 25)
-    app_secret = models.CharField(max_length = 100)
+    app_id = models.CharField(max_length = 25, default="0")
+    app_secret = models.CharField(max_length = 100, default="0")
 
     def __unicode__(self):
         return self.title
@@ -39,7 +39,7 @@ class TabType(PublishItem):
 class AppTab(PublishItem):
     app_info = models.ForeignKey(ApplicationInfo)
     tab_type = models.ForeignKey(TabType)
-    page_id = models.CharField(max_length = 100)
+    page_id = models.CharField(max_length = 100, blank=True, null=True)
     title = models.CharField(max_length =100)
     slug = models.SlugField()
 
