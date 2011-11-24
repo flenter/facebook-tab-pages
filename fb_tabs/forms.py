@@ -9,7 +9,6 @@ class ApplicationInfoForm(forms.ModelForm):
         fields = ('app_id', 'app_secret',)
 
     def clean(self, *args, **kwargs):
-        print dir(self)
 
         return super(ApplicationInfoForm, self).clean(*args, **kwargs)
 
@@ -21,10 +20,6 @@ class AppTabForm(forms.ModelForm):
 
     def clean(self):
         values = super(AppTabForm, self).clean()
-
-#        print dir(self)
-
-#        print self.cleaned_data['page_id']
 
         return values
 

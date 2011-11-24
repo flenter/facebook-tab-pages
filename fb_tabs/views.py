@@ -42,35 +42,20 @@ class TabbedPageMixin(object):
 
         return real_view
 
-class EditAppView(UpdateView):
-    model = ApplicationInfo
-
-    form_class = ApplicationInfoForm
-
-    def get_success_url(self):
-        return self.request.get_full_path()
-
-class EditTabView(UpdateView):
-    model = AppTab
-
-    form_class = AppTabForm
-
-    def get_success_url(self):
-        return self.request.get_full_path()
 
 class TabLandingView(TemplateView, TabbedPageMixin):
     """Initial view that handles retrieving the signed_request data and after that redirects to the TabView view
     There's already a start of some implemtation to test the applicaiton outside of facebook. But that has not 
     been fully implemented yet.
     """
+
     def dispatch(self, request, *args, **kwargs):
 
         try:
             self.get_correct_view(request, *args, **kwargs)
         except Http404, e:
-            print "404 detected... is staff?"
+
             if not request.user.is_staff:
-                print "again! re-raise"
                 raise
 
         return super(TabLandingView, self).dispatch(request, *args, **kwargs)
@@ -213,7 +198,21 @@ class TabView(TemplateView, TabbedPageMixin):
 
         return super(TabView, self).dispatch(request, *args, **kwargs)
 
+class EditAppView(UpdateView):
+    model = ApplicationInfo
+
+    form_class = ApplicationInfoForm
+
+    def get_success_url(self):
+        return self.request.get_full_path()
+
+class EditTabView(UpdateView):
+    model = AppTab
+
+    form_class = AppTabForm
+
+    def get_success_url(self):
+        return self.request.get_full_path()
 
 from fb_tabs import autodiscover
-
 autodiscover()
