@@ -1,12 +1,14 @@
 # Create your views here.
 
 from django.views.generic import TemplateView, View
+from django.views.generic.edit import UpdateView
 from django.shortcuts import get_object_or_404, Http404
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.encoding import smart_str
 
-from fb_tabs.models import AppTab
+from fb_tabs.models import AppTab, ApplicationInfo
+from fb_tabs.forms import AppTabForm, ApplicationInfoForm
 
 import base64
 import hashlib
@@ -17,8 +19,15 @@ class TabbedPageMixin(object):
     """ Mixin implementing the get_correct_view method. This checks for publish state yes/no and such.
     It returns the related view as set in the database (or none if the view is not valid anymore"""
 
-    def get_correct_view(self, *args, **kwargs):
-        tab = get_object_or_404(AppTab, app_info__slug = kwargs['app_slug'], slug = kwargs['tab_slug'])
+    def get_correct_view(self, request, *args, **kwargs):
+        query_kwargs = {
+                'app_info__slug': kwargs['app_slug'],
+                'slug': kwargs['tab_slug'],
+                }
+
+        tab = get_object_or_404(AppTab, **query_kwargs)
+
+        self.tab = tab
 
         if not tab.is_published() or not tab.app_info.is_published():
             raise Http404
@@ -33,6 +42,21 @@ class TabbedPageMixin(object):
 
         return real_view
 
+class EditAppView(UpdateView):
+    model = ApplicationInfo
+
+    form_class = ApplicationInfoForm
+
+    def get_success_url(self):
+        return self.request.get_full_path()
+
+class EditTabView(UpdateView):
+    model = AppTab
+
+    form_class = AppTabForm
+
+    def get_success_url(self):
+        return self.request.get_full_path()
 
 class TabLandingView(TemplateView, TabbedPageMixin):
     """Initial view that handles retrieving the signed_request data and after that redirects to the TabView view
@@ -41,7 +65,13 @@ class TabLandingView(TemplateView, TabbedPageMixin):
     """
     def dispatch(self, request, *args, **kwargs):
 
-        self.get_correct_view(request, *args, **kwargs)
+        try:
+            self.get_correct_view(request, *args, **kwargs)
+        except Http404, e:
+            print "404 detected... is staff?"
+            if not request.user.is_staff:
+                print "again! re-raise"
+                raise
 
         return super(TabLandingView, self).dispatch(request, *args, **kwargs)
 
@@ -55,11 +85,30 @@ class TabLandingView(TemplateView, TabbedPageMixin):
         return HttpResponseBadRequest()
 
     def post(self, request, *args, **kwargs):
-        signed_request = request.POST['signed_request']
+
+        signed_request = request.POST.get('signed_request', None)
+
+        if request.user.is_staff:
+            if signed_request:
+                request.method = "GET"
+            if (self.tab.app_info.app_id == '0' or self.tab.app_info.app_secret == '0'):
+                new_kwargs = {'slug': kwargs['app_slug']}
+                return EditAppView.as_view()(request, **new_kwargs)
+
+            if (self.tab.page_id == '0'):
+                new_kwargs = {'slug': kwargs['tab_slug']}
+                return EditTabView.as_view()(request, **new_kwargs)
+
+        if not signed_request:
+            # raise a 404 when there's a post to this page without a nice signed_request parameter
+            raise Http404
 
         secret = self.tab.app_info.app_secret
 
         data = self.parse_signed_request(smart_str(signed_request), smart_str(secret))
+
+        if data == None:
+            raise Http404
 
         data_to_store = {
                 'page_id': int(data['page']['id']),
@@ -119,10 +168,7 @@ class TabView(TemplateView, TabbedPageMixin):
 
     template_name = 'fb_tabs/index.html'
 
-    def get_correct_view(self, *args, **kwargs):
-        view = super(TabView, self).get_correct_view(*args, **kwargs)
-
-        user_uid = kwargs['user_uid']
+    def get_stored_data(self, user_uid):
 
         from django.core.cache import cache
 
@@ -135,22 +181,35 @@ class TabView(TemplateView, TabbedPageMixin):
 
         loaded_data = marshal.loads(data)
 
+        return loaded_data
+
+    def validate_url_data(self, loaded_data):
+
         if unicode(loaded_data['page_id']) != self.tab.page_id:
             raise Http404
 
-        self.loaded_data = loaded_data
+        data_tab = get_object_or_404(AppTab, page_id = loaded_data['page_id'])
 
-        return view
+        if data_tab.app_info.pk != self.tab.app_info.pk:
+            raise Http404
+
+        return True
 
     def dispatch(self, request, *args, **kwargs):
 
         real_view = self.get_correct_view(request, *args, **kwargs)
 
-        if issubclass(real_view, View):
-            instance = real_view.as_view()
-            kwargs['local_data'] = self.loaded_data
-            kwargs['tab'] = self.tab
-            return instance(request, *args, **kwargs)
+        self.loaded_data = self.get_stored_data(kwargs['user_uid'])
+
+        if self.validate_url_data(self.loaded_data):
+
+            if issubclass(real_view, View):
+
+                instance = real_view.as_view()
+                kwargs['local_data'] = self.loaded_data
+                kwargs['tab'] = self.tab
+
+                return instance(request, *args, **kwargs)
 
         return super(TabView, self).dispatch(request, *args, **kwargs)
 

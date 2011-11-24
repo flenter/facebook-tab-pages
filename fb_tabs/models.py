@@ -39,7 +39,7 @@ class TabType(PublishItem):
 class AppTab(PublishItem):
     app_info = models.ForeignKey(ApplicationInfo)
     tab_type = models.ForeignKey(TabType)
-    page_id = models.CharField(max_length = 100, blank=True, null=True)
+    page_id = models.CharField(max_length = 100, default="0")
     title = models.CharField(max_length =100)
     slug = models.SlugField()
 
