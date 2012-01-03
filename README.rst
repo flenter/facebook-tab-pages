@@ -11,11 +11,12 @@ The application contains two apps:
 * fb_tabs (the core)
 * tb_static (an example app that allows static pages to be displayed, and displays different content if a user has liked the person/group/company etc on facebook)
 
+
 ------------
 installation
 ------------
 
-You will need to add ``fb_tabs`` and/or ``fb_static``. to your ``INSTALLED_APPS``::
+You will need to add ``scm_core`` (see `django-scm_core`_) ``fb_tabs`` and/or ``fb_static``. to your ``INSTALLED_APPS``::
 
     INSTALLED_APPS = {
         'fb_tabs',
@@ -65,4 +66,4 @@ With this project, only one class based view is bundled. But adding one is easy,
     from fb_tabs import tab_types
     tab_types.register(MyCustomView)
 
-
+.. _`django-scm_core`: http://bitbucket.org/flenter/django-scm_core/
