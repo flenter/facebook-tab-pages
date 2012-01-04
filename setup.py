@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    from ez_setup import use_setuptools
+    use_setuptools()
+    from setuptools import setup, find_packages
+
 
 tests_require = [
         'django',
@@ -16,8 +22,8 @@ setup(
         description='Link a view to an app/tabb on facebook',
         url='http://github.com/flenter/facebook-tab-pages',
         install_requires=[
-            'django>=1.3',
-            'django-scm_core>=0.1.1',
+            'django >=1.3',
+            'django-scm_core',
             ],
         packages=find_packages(),
         include_package_data=True,
